@@ -1,6 +1,7 @@
 import models.User
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import utils.Charts.UserAges
 
 object Main extends App {
 
@@ -12,5 +13,6 @@ object Main extends App {
 
 //  val rdd = userDf.rdd
   println(userDf.first())
+  UserAges.showChart(userDf)
 }
 
