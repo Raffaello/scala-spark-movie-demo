@@ -10,7 +10,7 @@ object UserAges {
 
   private def buildChart(userDf: DataFrame, min: Int, max: Int, bins: Int) = {
     val ages = userDf.select("age").collect()
-    val step: Int = max/bins
+    val step: Int = max / bins
     var mapXs = Map[Int, Int](0 -> 0)
 
     for (i <- step until (max + step) by step) {
@@ -26,9 +26,9 @@ object UserAges {
       }
     }
 
-    val mxSorted = ListMap(mapXs.toSeq.sortBy(_._1):_*)
+    val mxSorted = ListMap(mapXs.toSeq.sortBy(_._1): _*)
     val ds = new DefaultCategoryDataset()
-    mxSorted.foreach{ case (k, v) => ds.addValue(v, "UserAges", k)}
+    mxSorted.foreach { case (k, v) => ds.addValue(v, "UserAges", k) }
 
     ChartFactories.BarChart(ds)
   }
