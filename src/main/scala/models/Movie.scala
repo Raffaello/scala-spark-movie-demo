@@ -7,7 +7,7 @@ import utils.data_ingestion.FromCSV
 object Movie extends FromCSV {
 
   private val customSchema = StructType(Array(
-    StructField("id", StringType, true),
+    StructField("id", IntegerType, true),
     StructField("name", StringType, true),
     StructField("date", StringType, true),
     StructField("url", StringType, true)

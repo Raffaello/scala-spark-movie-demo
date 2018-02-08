@@ -5,8 +5,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait FromCSV {
 
-  protected def read(path: String, customSchema: StructType)(implicit sqlContext: SparkSession): DataFrame = {
+  protected def read(path: String, customSchema: StructType, delimiter: String = "|")(implicit sqlContext: SparkSession): DataFrame = {
     sqlContext.read.format("com.databricks.spark.csv")
-      .option("delimiter", "|").schema(customSchema).load(path)
+      .option("delimiter", delimiter).schema(customSchema).load(path)
   }
 }

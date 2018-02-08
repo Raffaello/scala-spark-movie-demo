@@ -1,4 +1,4 @@
-import models.{Movie, User}
+import models.{Movie, Rating, User}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import utils.Charts.{MovieAges, UserAges}
@@ -11,10 +11,11 @@ object Main extends App {
 
   val userDf = User.readCSV("ml-100k/u.user")
   val movieDf = Movie.readCSV("ml-100k/u.item")
+  val ratingDf = Rating.readCSV("ml-100k/u.data")
 
-//  val rdd = userDf.rdd
   println(userDf.first())
   println(movieDf.first())
+  println(ratingDf.first())
 
   UserAges.showChart(userDf)
   MovieAges.showChart(movieDf)
