@@ -1,7 +1,7 @@
 import models.{Movie, Rating, User}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import utils.Charts.{MovieAges, UserAges}
+import utils.Charts.{MovieAges, RatingCount, UserAges}
 
 object Main extends App {
 
@@ -19,7 +19,7 @@ object Main extends App {
 
   UserAges.showChart(userDf)
   MovieAges.showChart(movieDf)
+  RatingCount.showChart(ratingDf)
 
   sparkSession.close()
 }
-
