@@ -1,7 +1,8 @@
-import models.{Movie, Rating, User}
+import models.{Movie, Rating, Recommendation, User}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import utils.Charts.{MovieAges, Ratings, UserAges}
+import utils.TextProcessing
 
 object Main extends App {
 
@@ -17,10 +18,14 @@ object Main extends App {
   println(movieDf.first())
   println(ratingDf.first())
 
-  UserAges.showChart(userDf)
-  MovieAges.showChart(movieDf)
-  Ratings.showUserRatings(ratingDf)
-  Ratings.showRatings(ratingDf)
+//  TextProcessing.processTitles(movieDf)
+
+//  UserAges.showChart(userDf)
+//  MovieAges.showChart(movieDf)
+//  Ratings.showUserRatings(ratingDf)
+//  Ratings.showRatings(ratingDf)
+
+  val alsModel = Recommendation.buildALSModel(ratingDf)
 
   sparkSession.close()
 }

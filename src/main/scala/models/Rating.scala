@@ -7,7 +7,7 @@ import utils.data_ingestion.FromCSV
 object Rating extends FromCSV {
   private val customSchema = StructType(Array(
     StructField("user_id", IntegerType, true),
-    StructField("rating_id", IntegerType, true),
+    StructField("movie_id", IntegerType, true),
     StructField("rating", IntegerType, true),
     StructField("timestamp", IntegerType, true)
   ))
