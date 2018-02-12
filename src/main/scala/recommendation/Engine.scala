@@ -16,12 +16,12 @@ object Engine {
     val Array(training, test) = ratings.randomSplit(Array(trainingWeight, 1.0 - trainingWeight))
     val alsConf = conf.getConfig("ASL")
     val als = new ALS()
-      .setMaxIter(alsConf.getInt("maxIter"))
-      .setRegParam(alsConf.getDouble("regParam"))
+      .setMaxIter(alsConf.getInt("max-iter"))
+      .setRegParam(alsConf.getDouble("reg-param"))
       .setUserCol(alsConf.getString("col-names.user-id"))
       .setItemCol(alsConf.getString("col-names.movie-id"))
       .setRatingCol(alsConf.getString("col-names.rating"))
-      .setImplicitPrefs(alsConf.getBoolean("implicitPrefs"))
+      .setImplicitPrefs(alsConf.getBoolean("implicit-pgit srefs"))
 
     val model = als.fit(training)
 
