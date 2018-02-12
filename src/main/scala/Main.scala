@@ -1,4 +1,5 @@
-import models.{Movie, Rating, Recommendation, User}
+import recommendation.Engine
+import models.{Movie, Rating, User}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import utils.Charts.{MovieAges, Ratings, UserAges}
@@ -25,7 +26,7 @@ object Main extends App {
 //  Ratings.showUserRatings(ratingDf)
 //  Ratings.showRatings(ratingDf)
 
-  val alsModel = Recommendation.buildALSModel(ratingDf)
+  val alsModel = Engine.buildALSModel(ratingDf)
 
   sparkSession.close()
 }
