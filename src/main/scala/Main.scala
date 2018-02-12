@@ -27,6 +27,7 @@ object Main extends App {
 //  Ratings.showRatings(ratingDf)
 
   val alsModel = Engine.buildALSModel(ratingDf)
+  Engine.saveModel(alsModel)
 
   sparkSession.close()
 }

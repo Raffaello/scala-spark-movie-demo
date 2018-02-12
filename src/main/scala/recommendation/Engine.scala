@@ -21,7 +21,7 @@ object Engine {
       .setUserCol(alsConf.getString("col-names.user-id"))
       .setItemCol(alsConf.getString("col-names.movie-id"))
       .setRatingCol(alsConf.getString("col-names.rating"))
-      .setImplicitPrefs(alsConf.getBoolean("implicit-pgit srefs"))
+      .setImplicitPrefs(alsConf.getBoolean("implicit-prefs"))
 
     val model = als.fit(training)
 
@@ -42,5 +42,13 @@ object Engine {
     println(s"Root-mean-square error = $rmse")
 
     model
+  }
+
+  def saveModel(model: ALSModel): Unit = {
+    model.save(conf.getString("ASL.store-path"))
+  }
+
+  def loadModel(): ALSModel = {
+    ALS.load(conf.getString("ASL.store-path"))
   }
 }
