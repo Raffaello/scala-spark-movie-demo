@@ -1,54 +1,42 @@
 package recommendation
 
-import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.recommendation.{ALS, ALSModel}
+import org.apache.spark.SparkContext
+import org.apache.spark.ml.recommendation.ALSModel
+import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.sql.DataFrame
 
 object Engine {
 
   import com.typesafe.config.{Config, ConfigFactory}
 
-  private val conf: Config = ConfigFactory.load().getConfig("recommendation")
+  private implicit val conf: Config = ConfigFactory.load().getConfig("recommendation")
 
-  def buildALSModel(ratings: DataFrame): ALSModel = {
+  def train(ratings: DataFrame): MatrixFactorizationModel = {
+//    val trainingWeight = conf.getDouble("training-weight")
+//    val Array(training, test) = ratings.randomSplit(Array(trainingWeight, 1.0 - trainingWeight))
+    val alsConf = conf.getConfig("rdd.ASL")
 
-    val trainingWeight = conf.getDouble("training-weight")
-    val Array(training, test) = ratings.randomSplit(Array(trainingWeight, 1.0 - trainingWeight))
-    val alsConf = conf.getConfig("ASL")
-    val als = new ALS()
-      .setMaxIter(alsConf.getInt("max-iter"))
-      .setRegParam(alsConf.getDouble("reg-param"))
-      .setUserCol(alsConf.getString("col-names.user-id"))
-      .setItemCol(alsConf.getString("col-names.movie-id"))
-      .setRatingCol(alsConf.getString("col-names.rating"))
+    val model = new ALS()
+      .setBlocks(alsConf.getInt("num-blocks"))
+      .setNonnegative(alsConf.getBoolean("non-negative"))
       .setImplicitPrefs(alsConf.getBoolean("implicit-prefs"))
-
-    val model = als.fit(training)
-
-    // Evaluate the model by computing the RMSE on the test data
-    // Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
-    model.setColdStartStrategy(alsConf.getString("cold-start-strategy"))
-
-    val predictions = model.transform(test)
-
-    val evalConf = conf.getConfig("evaluator")
-    val evaluator = new RegressionEvaluator()
-      .setMetricName(evalConf.getString("metric-name"))
-      .setLabelCol(evalConf.getString("label-col"))
-      .setPredictionCol(evalConf.getString("prediction-col"))
-
-    val rmse = evaluator.evaluate(predictions)
-
-    println(s"Root-mean-square error = $rmse")
+      .setIterations(alsConf.getInt("iterations"))
+      .setLambda(alsConf.getDouble("lambda"))
+      .setRank(alsConf.getInt("rank"))
+      .setAlpha(alsConf.getDouble("alpha"))
+      // TODO: review the mapping using the df column names
+      .run(ratings.map(r => Rating(r.getInt(0), r.getInt(1), r.getFloat(2))).rdd)
 
     model
   }
 
-  def saveModel(model: ALSModel): Unit = {
-    model.save(conf.getString("ASL.store-path"))
+  def buildALSModel(ratings: DataFrame): ALSModel = ModelBuilder.buildALSModel(ratings)
+
+  def save(model: MatrixFactorizationModel)(implicit sc: SparkContext): Unit = {
+    model.save(sc, conf.getString("ASL.store-path"))
   }
 
-  def loadModel(): ALSModel = {
-    ALS.load(conf.getString("ASL.store-path"))
+  def load()(implicit sc: SparkContext): MatrixFactorizationModel = {
+    MatrixFactorizationModel.load(sc, conf.getString("ASL.store-path"))
   }
 }
