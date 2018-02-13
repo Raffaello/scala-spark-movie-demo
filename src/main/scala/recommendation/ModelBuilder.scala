@@ -10,10 +10,9 @@ private[recommendation] object ModelBuilder {
 
   def buildALSModel(ratings: DataFrame)(implicit rConf:Config) : ALSModel = {
 
-    val conf = rConf.getConfig("model")
     val trainingWeight = rConf.getDouble("training-weight")
     val Array(training, test) = ratings.randomSplit(Array(trainingWeight, 1.0 - trainingWeight))
-    val alsConf = conf.getConfig("ASL")
+    val alsConf = rConf.getConfig("ASL")
     val model = new ALS()
       .setMaxIter(alsConf.getInt("max-iter"))
       .setRegParam(alsConf.getDouble("reg-param"))
@@ -28,7 +27,7 @@ private[recommendation] object ModelBuilder {
     model.setColdStartStrategy(alsConf.getString("cold-start-strategy"))
 
     val predictions = model.transform(test)
-    val evalConf = conf.getConfig("evaluator")
+    val evalConf = alsConf.getConfig("evaluator")
     val evaluator = new RegressionEvaluator()
       .setMetricName(evalConf.getString("metric-name"))
       .setLabelCol(evalConf.getString("label-col"))

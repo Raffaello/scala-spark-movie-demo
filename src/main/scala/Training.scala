@@ -8,13 +8,13 @@ object Training extends App with SparkSessionLocalMovieApp {
   val alsModel = Engine.buildALSModel(ratingDf)
 
   //  TextProcessing.processTitles(movieDf)
-
   //  UserAges.showChart(userDf)
   //  MovieAges.showChart(movieDf)
   //  Ratings.showUserRatings(ratingDf)
   //  Ratings.showRatings(ratingDf)
 
-  Engine.saveModel(alsModel)
+  val model = Engine.train(ratingDf)
+  Engine.save(model)
 
   sparkSession.close()
 }
