@@ -2,6 +2,9 @@ package recommendation
 
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.recommendation.ALSModel
+import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import breeze.linalg.{Vector => BV, DenseVector => BDV}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -36,5 +39,14 @@ object Engine {
 
   def load()(implicit sc: SparkContext): MatrixFactorizationModel = {
     MatrixFactorizationModel.load(sc, conf.getString("store-path"))
+  }
+
+//  def cosSim(model: MatrixFactorizationModel): Double = {
+//      val v1 = Vectors.dense(model.productFeatures.lookup(1).head)
+//      model.productFeatures.lookup(1)
+//  }
+
+  def localCosineSimilarity(v1: Vector, v2: Vector, threshold: Double = 0)(implicit sc: SparkContext): Double = {
+    BDV(v1.toArray).dot(BDV(v2.toArray)) / (Vectors.norm(v1, 2) * Vectors.norm(v2, 2))
   }
 }

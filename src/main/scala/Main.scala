@@ -1,4 +1,5 @@
 import models.{Movie, Rating, User}
+import org.apache.spark.mllib.linalg.Vectors
 import recommendation.Engine
 import utils.SparkSessionLocalMovieApp
 
@@ -19,16 +20,18 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(movieDf.first())
   println(ratingDf.first())
 
-  // TODO: move to the train part and later here just load the model.
-//  val model = Engine.train(ratingDf)
   val model = Engine.load()
   val userId = 789
   val K = 10
   val topKRecs = model.recommendProducts(userId, K)
 
-  for(r <- topKRecs) {
-    printf("%d - %s - %f\n", r.user, getMovieBy(r.product), r.rating)
-  }
+  topKRecs.foreach(r => printf("%d - (%d) %s - %f\n", r.user, r.product, getMovieBy(r.product), r.rating))
+
+  val v1 = Vectors.dense(model.productFeatures.lookup(1022).head)
+  val v2 = Vectors.dense(model.productFeatures.lookup(1368).head)
+
+  println(Engine.localCosineSimilarity(v1, v1))
+  println(Engine.localCosineSimilarity(v1, v2))
 
   sparkSession.close()
 }

@@ -6,7 +6,6 @@ import org.apache.spark.sql.DataFrame
 import org.jfree.chart.axis.CategoryLabelPositions
 import org.jfree.data.category.DefaultCategoryDataset
 
-import scala.collection.immutable.ListMap
 import scalax.chart.module.CategoryChartFactories.BarChart
 
 object Ratings {
