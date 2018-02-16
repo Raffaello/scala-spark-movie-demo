@@ -5,6 +5,7 @@ import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import breeze.linalg.{DenseVector => BDV}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Engine {
@@ -47,6 +48,12 @@ object Engine {
 
   def localCosineSimilarity(v1: Vector, v2: Vector): Double = {
     BDV(v1.toArray).dot(BDV(v2.toArray)) / (Vectors.norm(v1, 2) * Vectors.norm(v2, 2))
+  }
+
+  def localCosineSimilarity(vFeatures: RDD[(Int, Array[Double])], v: Vector, k: Int): Array[(Int, Double)] = {
+    vFeatures
+      .map{ case (i, a) => (i, localCosineSimilarity(v, Vectors.dense(a))) }
+      .top(k)(Ordering.by(_._2))
   }
 
   /**
