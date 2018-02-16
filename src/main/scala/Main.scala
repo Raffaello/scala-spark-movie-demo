@@ -33,7 +33,10 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(Engine.localCosineSimilarity(v1, v1))
   println(Engine.localCosineSimilarity(v1, v2))
 
-  println(Engine.localCosineSimilarity(model.productFeatures, v1, K).mkString("\n"))
+  Engine.localCosineSimilarity(model.productFeatures, v1, K)
+    .foreach{ case (i, d) => printf("%d - %f (%s)\n", i, d, getMovieBy(i))}
+
+  println()
   println(Engine.localCosineSimilarity(
     model.userFeatures,
     Vectors.dense(model.userFeatures.lookup(userId).head),
