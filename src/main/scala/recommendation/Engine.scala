@@ -1,14 +1,14 @@
 package recommendation
 
-import java.lang.IllegalArgumentException
-
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import breeze.linalg.{DenseVector => BDV}
+import org.apache.spark.mllib.evaluation.{RankingMetrics, RegressionMetrics}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import recommendation.Evaluator.ratesAndPred
 
 object Engine {
 
@@ -42,11 +42,43 @@ object Engine {
     train(convert(ratings))
   }
 
-  def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating], evalModel :String = conf.getString("evaluator"))
+  def evaluate(userId: Int, products: DataFrame, predicted: Array[Rating], k: Int, evalModel :String)
+              (implicit ss: SparkSession): Double = {
+
+    import ss.implicits._
+
+    evalModel match {
+      case "APK" => Evaluator.APK(
+        products.filter(r => r(0) == userId).map(r => r.getInt(0)).collect().toSeq,
+        predicted.take(k).map(_.product),
+        k)
+//      case "MAPK" => ???
+      case x => throw new IllegalArgumentException(s"not valid evaluator method $x")
+    }
+  }
+
+  def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating]): RegressionMetrics = {
+    new RegressionMetrics(ratesAndPred(model, ratings).map(x => x._2))
+  }
+
+//  def evaluate(): RankingMetrics = {
+//    new RankingMetrics()
+//  }
+
+  /**
+    * @deprecated
+    * @param model
+    * @param ratings
+    * @param evalModel
+    * @param sc
+    * @return
+    */
+  def evaluator(model: MatrixFactorizationModel, ratings: RDD[Rating], evalModel :String)
               (implicit sc: SparkContext): Double = {
     evalModel match {
       case "MSE" => Evaluator.MSE(model, ratings)
       case "RMSE" => Evaluator.RMSE(model, ratings)
+//      case "regression-metrics" => Evaluator.regressionMetrics(model, ratings)
       case x =>  throw new IllegalArgumentException(s"not valid evaluator method $x")
     }
   }
