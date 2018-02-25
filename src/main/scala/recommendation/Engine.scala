@@ -42,8 +42,9 @@ object Engine {
     train(convert(ratings))
   }
 
-  def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating])(implicit sc: SparkContext): Double = {
-    conf.getString("evaluator") match {
+  def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating], evalModel :String = conf.getString("evaluator"))
+              (implicit sc: SparkContext): Double = {
+    evalModel match {
       case "MSE" => Evaluator.MSE(model, ratings)
       case "RMSE" => Evaluator.RMSE(model, ratings)
       case x =>  throw new IllegalArgumentException(s"not valid evaluator method $x")
