@@ -1,7 +1,9 @@
 package recommendation
 
-import org.apache.spark.mllib.linalg.{Matrices, Vectors}
-import breeze.linalg.{DenseMatrix, Matrix, DenseVector => BDV}
+import breeze.linalg.DenseMatrix
+import breeze.util.JavaArrayOps
+import org.apache.spark.SparkContext
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.recommendation.{MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
 
@@ -76,22 +78,29 @@ private[recommendation] object Evaluator {
   }
 
   /**
+    * TODO: use distributed matrix
     * Mean Average Precision at K
     * @return
     */
-  def MAPK(model: MatrixFactorizationModel): Double = {
-//    val itemsFactor = model.productFeatures.map{ case (_, f) => f}.collect()
-//
-//    val itemsMatrix =
-    // broad cast itemsMatrix
+  def MAPK(imBroadcast: Broadcast[DenseMatrix[Double]], model: MatrixFactorizationModel, ratings: RDD[Rating], k: Int)
+          (implicit sc: SparkContext): Double = {
 
-//    val allRecs = model.userFeatures.map{ case(i, a) =>
-//        val userVector
+    val allRecs = model.userFeatures.map { case (i, a) =>
+      val userVector = JavaArrayOps.arrayDToDv(a)
+      val scores = imBroadcast.value * userVector
+      val sortedWithId = scores.data.zipWithIndex.sortBy(-_._1)
+      val recommendIds = sortedWithId.map(_._2 + 1).toSeq
+      (i, recommendIds)
+    }
 
-    -1.0
+    val userProducts = ratings.map { case Rating(u, p, _) => (u, p) }
+      .groupBy(_._1)
+
+    allRecs.join(userProducts).map { case (_, (predicted, actualWithIds)) =>
+      val actual = actualWithIds.map(_._2).toSeq
+      APK(actual, predicted, k)
+    }.mean()
   }
-
-
   /**
     * Local Sensitive Hashing
     * @return

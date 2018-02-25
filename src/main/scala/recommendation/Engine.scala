@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import breeze.linalg.{DenseVector => BDV}
+import breeze.util.JavaArrayOps
 import org.apache.spark.mllib.evaluation.{RankingMetrics, RegressionMetrics}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
@@ -42,19 +43,38 @@ object Engine {
     train(convert(ratings))
   }
 
-  def evaluate(userId: Int, products: DataFrame, predicted: Array[Rating], k: Int, evalModel :String)
+  def APK(userId: Int, products: DataFrame, predicted: Array[Rating], k: Int)
               (implicit ss: SparkSession): Double = {
 
     import ss.implicits._
 
-    evalModel match {
-      case "APK" => Evaluator.APK(
-        products.filter(r => r(0) == userId).map(r => r.getInt(0)).collect().toSeq,
-        predicted.take(k).map(_.product),
-        k)
-//      case "MAPK" => ???
-      case x => throw new IllegalArgumentException(s"not valid evaluator method $x")
-    }
+    Evaluator.APK(
+      products.filter(r => r(0) == userId).map(r => r.getInt(0)).collect().toSeq,
+      predicted.take(k).map(_.product),
+      k
+    )
+  }
+
+  /**
+    * TODO: auto-tuning function, keep higher value of MAPK
+    * Try out a few parameter settings for lambda and rank
+    * (and alpha, if you are using the implicit version of ALS)
+    * and see whether you can find a model that performs better based on the RMSE and MAPK evaluation metrics.
+    * @param model
+    * @param ratings
+    * @param k
+    * @param sc
+    * @return
+    */
+  def MAPK(model: MatrixFactorizationModel, ratings: RDD[Rating], k: Int)
+          (implicit sc: SparkContext): Double = {
+    Evaluator.MAPK(
+      sc.broadcast(JavaArrayOps
+        .array2DToDm(model.productFeatures.map { case (_, f) => f }.collect())),
+      model,
+      ratings,
+      k
+    )
   }
 
   def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating]): RegressionMetrics = {

@@ -51,9 +51,10 @@ object Main extends App with SparkSessionLocalMovieApp {
 
   println()
   println("Evaluation:")
+  println(s"MSE: ${Engine.evaluator(model, ratingRDD, "MSE")}")
   println(s"RMSE: ${Engine.evaluator(model, ratingRDD, "RMSE")}")
-//  val actualUserMovies = movieDf.filter(r => r(0) == userId).map(r => r.getInt(0)).collect()
-  println(s"APK, ${Engine.evaluate(userId, movieDf, topKRecs, K, "APK")}")
+  println(s"APK, ${Engine.APK(userId, movieDf, topKRecs, K)}")
+  println(s"MAPK, ${Engine.MAPK(model, ratingRDD, K)}")
 
   val regMetrics = Engine.evaluate(model, ratingRDD)
   println("regMetrics:")
