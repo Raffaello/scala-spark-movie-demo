@@ -77,26 +77,39 @@ private[recommendation] object Evaluator {
     }
   }
 
-  /**
-    * TODO: use distributed matrix
-    * Mean Average Precision at K
-    * @return
-    */
-  def MAPK(imBroadcast: Broadcast[DenseMatrix[Double]], model: MatrixFactorizationModel, ratings: RDD[Rating], k: Int)
-          (implicit sc: SparkContext): Double = {
+  private def broadcastItemMatrix(productFeatures: RDD[(Int, Array[Double])])
+                                 (implicit sc: SparkContext): Broadcast[DenseMatrix[Double]] = {
+    sc.broadcast(JavaArrayOps
+      .array2DToDm(productFeatures.map { case (_, f) => f }.collect()))
+  }
 
-    val allRecs = model.userFeatures.map { case (i, a) =>
+  def allRecsUserProducts(model: MatrixFactorizationModel, ratings: RDD[Rating])
+                         (implicit sc: SparkContext): RDD[(Int, (Seq[Int], Iterable[(Int, Int)]))] = {
+
+    val imBroadcast = broadcastItemMatrix(model.productFeatures)
+    val userProducts = ratings.map { case Rating(u, p, _) => (u, p) }
+      .groupBy(_._1)
+
+    model.userFeatures.map { case (i, a) =>
       val userVector = JavaArrayOps.arrayDToDv(a)
       val scores = imBroadcast.value * userVector
       val sortedWithId = scores.data.zipWithIndex.sortBy(-_._1)
       val recommendIds = sortedWithId.map(_._2 + 1).toSeq
       (i, recommendIds)
-    }
+    }.join(userProducts)
+  }
 
-    val userProducts = ratings.map { case Rating(u, p, _) => (u, p) }
-      .groupBy(_._1)
-
-    allRecs.join(userProducts).map { case (_, (predicted, actualWithIds)) =>
+  /**
+    * TODO: use distributed matrix
+    * Mean Average Precision at K
+    * @return
+    */
+  def MAPK(model: MatrixFactorizationModel, ratings: RDD[Rating], k: Int)
+          (implicit sc: SparkContext): Double = {
+    allRecsUserProducts(
+      model,
+      ratings
+    ).map { case (_, (predicted, actualWithIds)) =>
       val actual = actualWithIds.map(_._2).toSeq
       APK(actual, predicted, k)
     }.mean()

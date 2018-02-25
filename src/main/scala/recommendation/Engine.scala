@@ -3,8 +3,9 @@ package recommendation
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
-import breeze.linalg.{DenseVector => BDV}
+import breeze.linalg.{DenseMatrix, DenseVector => BDV}
 import breeze.util.JavaArrayOps
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.evaluation.{RankingMetrics, RegressionMetrics}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
@@ -43,6 +44,15 @@ object Engine {
     train(convert(ratings))
   }
 
+  /**
+    * @deprecated
+    * @param userId
+    * @param products
+    * @param predicted
+    * @param k
+    * @param ss
+    * @return
+    */
   def APK(userId: Int, products: DataFrame, predicted: Array[Rating], k: Int)
               (implicit ss: SparkSession): Double = {
 
@@ -56,6 +66,7 @@ object Engine {
   }
 
   /**
+    * @deprecated
     * TODO: auto-tuning function, keep higher value of MAPK
     * Try out a few parameter settings for lambda and rank
     * (and alpha, if you are using the implicit version of ALS)
@@ -69,21 +80,26 @@ object Engine {
   def MAPK(model: MatrixFactorizationModel, ratings: RDD[Rating], k: Int)
           (implicit sc: SparkContext): Double = {
     Evaluator.MAPK(
-      sc.broadcast(JavaArrayOps
-        .array2DToDm(model.productFeatures.map { case (_, f) => f }.collect())),
       model,
       ratings,
       k
     )
   }
 
-  def evaluate(model: MatrixFactorizationModel, ratings: RDD[Rating]): RegressionMetrics = {
+  def evaluateRegression(model: MatrixFactorizationModel, ratings: RDD[Rating]): RegressionMetrics = {
     new RegressionMetrics(ratesAndPred(model, ratings).map(x => x._2))
   }
 
-//  def evaluate(): RankingMetrics = {
-//    new RankingMetrics()
-//  }
+  def evaluateRanking(model: MatrixFactorizationModel, ratings: RDD[Rating])
+                     (implicit sc: SparkContext): RankingMetrics[Int] = {
+    new RankingMetrics[Int](
+      Evaluator.allRecsUserProducts(model, ratings)
+      .map {
+        case (_, (predicted, actualWithIds)) =>
+          val actual = actualWithIds.map(_._2)
+          (predicted.toArray, actual.toArray)
+      })
+  }
 
   /**
     * @deprecated

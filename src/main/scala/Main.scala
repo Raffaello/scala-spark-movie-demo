@@ -55,14 +55,21 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(s"RMSE: ${Engine.evaluator(model, ratingRDD, "RMSE")}")
   println(s"APK, ${Engine.APK(userId, movieDf, topKRecs, K)}")
   println(s"MAPK, ${Engine.MAPK(model, ratingRDD, K)}")
+  println(s"MAP, ${Engine.MAPK(model, ratingRDD, 10000)}")
 
-  val regMetrics = Engine.evaluate(model, ratingRDD)
+  val regMetrics = Engine.evaluateRegression(model, ratingRDD)
   println("regMetrics:")
   println(s"RMSE = ${regMetrics.rootMeanSquaredError}")
   println(s"MSE  = ${regMetrics.meanSquaredError}")
   println(s"MAE  = ${regMetrics.meanAbsoluteError}")
   println(s"EV   = ${regMetrics.explainedVariance}")
   println(s"r2   = ${regMetrics.r2}")
+
+  val rankMetrics = Engine.evaluateRanking(model, ratingRDD)
+  println("rankingMetrics:")
+  println(s" APK = ${rankMetrics.precisionAt(K)}")
+  println(s" MAP = ${rankMetrics.meanAveragePrecision}")
+  println(s" NDCGK = ${rankMetrics.ndcgAt(K)}")
 
   sparkSession.close()
 }
