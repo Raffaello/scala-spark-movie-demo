@@ -1,6 +1,5 @@
 import models.{Movie, Rating => MRating, User}
 import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.recommendation.Rating
 import recommendation.Engine
 import utils.SparkSessionLocalMovieApp
 

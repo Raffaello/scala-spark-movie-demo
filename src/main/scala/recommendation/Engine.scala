@@ -3,9 +3,7 @@ package recommendation
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
-import breeze.linalg.{DenseMatrix, DenseVector => BDV}
-import breeze.util.JavaArrayOps
-import org.apache.spark.broadcast.Broadcast
+import breeze.linalg.{DenseVector => BDV}
 import org.apache.spark.mllib.evaluation.{RankingMetrics, RegressionMetrics}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
