@@ -24,25 +24,43 @@ object Engine {
   }
 
   def train(ratings: RDD[Rating])(implicit ss: SparkSession): MatrixFactorizationModel = {
-    val model = new ALS()
-      .setBlocks(conf.getInt("num-blocks"))
-      .setNonnegative(conf.getBoolean("non-negative"))
-      .setIterations(conf.getInt("iterations"))
-      .setLambda(conf.getDouble("lambda"))
-      .setRank(conf.getInt("rank"))
-      .setAlpha(conf.getDouble("alpha"))
-      .setImplicitPrefs(conf.getBoolean("implicit-prefs"))
-
-    if (!conf.getIsNull("seed")) model.setSeed(conf.getLong("seed"))
-
-    model.run(ratings)
+      explicitTrain(ratings,
+        conf.getInt("num-blocks"),
+        conf.getBoolean("non-negative"),
+        conf.getInt("iterations"),
+        conf.getDouble("lambda"),
+        conf.getInt("rank"),
+        conf.getDouble("alpha"),
+        conf.getBoolean("implicit-prefs")
+      )
   }
 
   def train(ratings: DataFrame)(implicit ss: SparkSession): MatrixFactorizationModel = {
     train(convert(ratings))
   }
 
-  /**
+  def explicitTrain(ratings: RDD[Rating], numBlocks: Int, nonNegative: Boolean, iter: Int, lambda: Double, rank: Int, alpha: Double, implicitPrefs: Boolean)
+                   (implicit ss: SparkSession): MatrixFactorizationModel = {
+    val model = new ALS()
+      .setBlocks(numBlocks)
+      .setNonnegative(nonNegative)
+      .setIterations(iter)
+      .setLambda(lambda)
+      .setRank(rank)
+      .setAlpha(alpha)
+      .setImplicitPrefs(implicitPrefs)
+
+    if (!conf.getIsNull("seed")) model.setSeed(conf.getLong("seed"))
+
+    model.run(ratings)
+  }
+
+  def explicitTrain(ratings: DataFrame, numBlocks: Int, nonNegative: Boolean, iter: Int, lambda: Double, rank: Int, alpha: Double, implicitPrefs: Boolean)
+                   (implicit ss: SparkSession): MatrixFactorizationModel = {
+    explicitTrain(convert(ratings), numBlocks, nonNegative, iter, lambda, rank, alpha, implicitPrefs)
+  }
+
+    /**
     * @deprecated
     * @param userId
     * @param products

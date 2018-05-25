@@ -8,7 +8,7 @@ private[recommendation] object ModelBuilder {
 
   import com.typesafe.config.Config
 
-  def buildALSModel(ratings: DataFrame)(implicit rConf:Config) : ALSModel = {
+  def buildALSModel(ratings: DataFrame)(implicit rConf:Config): ALSModel = {
 
     val trainingWeight = rConf.getDouble("training-weight")
     val Array(training, test) = ratings.randomSplit(Array(trainingWeight, 1.0 - trainingWeight))
