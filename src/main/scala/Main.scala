@@ -22,11 +22,15 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(ratingDf.first())
 
   val model = Engine.load()
-  val userId = 789
+  val userId = 944
   val K = 10
   val topKRecs = model.recommendProducts(userId, K)
 
-  println("Recommendation (UserId - MovieId - MovieTitle - Rating")
+  println ("User movies: (UserId - MovieId - MovieTitle - Rating")
+  ratingRDD.filter(f => f.user == userId).collect
+    .foreach(r => printf("%d - (%d) %s - %f\n", r.user, r.product, getMovieBy(r.product), r.rating))
+
+  println("Recommendation (UserId - MovieId - MovieTitle - Rating)")
   topKRecs.foreach(r => printf("%d - (%d) %s - %f\n", r.user, r.product, getMovieBy(r.product), r.rating))
   val Array(r1, r2) = topKRecs.take(2).map(r => r.product)
   val v1 = Vectors.dense(model.productFeatures.lookup(r1).head)
@@ -57,7 +61,7 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(s"MAP, ${Engine.MAPK(model, ratingRDD, 10000)}")
 
   val regMetrics = Engine.evaluateRegression(model, ratingRDD)
-  println("regMetrics:")
+  println("regression Metrics:")
   println(s"RMSE = ${regMetrics.rootMeanSquaredError}")
   println(s"MSE  = ${regMetrics.meanSquaredError}")
   println(s"MAE  = ${regMetrics.meanAbsoluteError}")
@@ -65,9 +69,10 @@ object Main extends App with SparkSessionLocalMovieApp {
   println(s"r2   = ${regMetrics.r2}")
 
   val rankMetrics = Engine.evaluateRanking(model, ratingRDD)
-  println("rankingMetrics:")
+  println("ranking Metrics:")
   println(s" APK = ${rankMetrics.precisionAt(K)}")
   println(s" MAP = ${rankMetrics.meanAveragePrecision}")
+  // Normalized Discounted cumulative gain
   println(s" NDCGK = ${rankMetrics.ndcgAt(K)}")
 
   sparkSession.close()
